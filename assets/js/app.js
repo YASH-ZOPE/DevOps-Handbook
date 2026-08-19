@@ -36,43 +36,59 @@ document.addEventListener('DOMContentLoaded', () => {
       .join(' ');
   }
 
-  // Dynamically Load Manifest & Build Dynamic Navigation Tree
+  // Dynamically Load Manifest & Build 2-Tier Dynamic Navigation Tree
   async function loadManifestAndBuildNav() {
     try {
-      const response = await fetch('assets/data/manifest.json');
-      if (!response.ok) {
-        throw new Error('Could not load assets/data/manifest.json');
+      if (window.HANDBOOK_MANIFEST && Array.isArray(window.HANDBOOK_MANIFEST)) {
+        allFilesList = window.HANDBOOK_MANIFEST;
+      } else {
+        const response = await fetch('assets/data/manifest.json');
+        if (!response.ok) {
+          throw new Error('Could not load assets/data/manifest.json');
+        }
+        allFilesList = await response.json();
       }
-      allFilesList = await response.json();
 
-      // Group paths dynamically by folder structure
-      const groupsMap = {};
+      // Group paths dynamically by Top-Level Module -> Subcategory Folder -> Files
+      const modulesMap = {};
 
       allFilesList.forEach(path => {
         if (path === 'README.md') {
-          if (!groupsMap['Overview']) groupsMap['Overview'] = [];
-          groupsMap['Overview'].push({ title: 'DevOps Handbook Overview', path });
+          const modName = '📖 Handbook Overview';
+          if (!modulesMap[modName]) modulesMap[modName] = {};
+          if (!modulesMap[modName]['Overview Docs']) modulesMap[modName]['Overview Docs'] = [];
+          modulesMap[modName]['Overview Docs'].push({ title: 'DevOps Handbook Overview', path });
           return;
         }
 
         const parts = path.split('/');
-        if (parts.length >= 2) {
-          const categoryFolder = parts[1] || parts[0];
-          const sectionTitle = formatTitle(categoryFolder);
-          const fileName = parts[parts.length - 1];
-          const itemTitle = fileName.replace(/\.md$/, '');
+        let moduleFolder = parts[0];
+        let categoryFolder = parts.length > 2 ? parts[1] : 'General';
+        let fileName = parts[parts.length - 1];
+        let itemTitle = fileName.replace(/\.md$/, '');
 
-          if (!groupsMap[sectionTitle]) {
-            groupsMap[sectionTitle] = [];
-          }
-          groupsMap[sectionTitle].push({ title: itemTitle, path });
-        }
+        // Friendly Module Header Titles
+        let moduleTitle = formatTitle(moduleFolder);
+        if (moduleFolder.startsWith('01-Linux')) moduleTitle = '🐧 Module 01: Linux Administration';
+        else if (moduleFolder.startsWith('02-Git')) moduleTitle = '🐙 Module 02: Git & GitHub';
+        else if (moduleFolder.startsWith('03-Docker')) moduleTitle = '🐳 Module 03: Docker & Compose';
+        else if (moduleFolder.startsWith('07-Terraform')) moduleTitle = '🏗️ Module 07: Terraform IaC';
+
+        const categoryTitle = formatTitle(categoryFolder);
+
+        if (!modulesMap[moduleTitle]) modulesMap[moduleTitle] = {};
+        if (!modulesMap[moduleTitle][categoryTitle]) modulesMap[moduleTitle][categoryTitle] = [];
+
+        modulesMap[moduleTitle][categoryTitle].push({ title: itemTitle, path });
       });
 
-      // Convert map to navTree structure
-      navTree = Object.keys(groupsMap).map(section => ({
-        section: section,
-        items: groupsMap[section]
+      // Convert nested map to navTree array
+      navTree = Object.keys(modulesMap).map(modTitle => ({
+        moduleTitle: modTitle,
+        subgroups: Object.keys(modulesMap[modTitle]).map(catTitle => ({
+          section: catTitle,
+          items: modulesMap[modTitle][catTitle]
+        }))
       }));
 
       renderSidebar();
@@ -90,32 +106,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Render Dynamic Sidebar
+  // Render Dynamic 2-Tier Cascading Sidebar Navigation
   function renderSidebar() {
     navList.innerHTML = "";
-    navTree.forEach(group => {
-      const sectionHeader = document.createElement("div");
-      sectionHeader.className = "sidebar-section-title";
-      sectionHeader.innerText = group.section;
-      navList.appendChild(sectionHeader);
 
-      group.items.forEach(item => {
-        const a = document.createElement("a");
-        a.className = "nav-item";
-        a.dataset.path = item.path;
-        a.innerHTML = `<span>${item.title}</span>`;
-        a.addEventListener("click", () => loadMarkdownFile(item.path));
-        navList.appendChild(a);
+    navTree.forEach((mod, modIdx) => {
+      const moduleGroup = document.createElement("div");
+      moduleGroup.className = "sidebar-module-group";
+
+      // Tier 1: Master Module Header (e.g. 🐧 Module 01: Linux Administration)
+      const moduleHeader = document.createElement("div");
+      moduleHeader.className = "sidebar-module-title collapsible";
+      moduleHeader.innerHTML = `
+        <span>📁 ${mod.moduleTitle}</span>
+        <span class="chevron">▶</span>
+      `;
+
+      // Tier 1 Body
+      const moduleBody = document.createElement("div");
+      moduleBody.className = "sidebar-module-body collapsed";
+
+      // Auto-expand Overview & Linux by default
+      if (modIdx === 0 || mod.moduleTitle.includes("Linux") || mod.moduleTitle.includes("Overview")) {
+        moduleBody.classList.remove("collapsed");
+        moduleHeader.classList.add("expanded");
+      }
+
+      moduleHeader.addEventListener("click", () => {
+        const isCollapsed = moduleBody.classList.toggle("collapsed");
+        moduleHeader.classList.toggle("expanded", !isCollapsed);
       });
+
+      // Tier 2: Sub-category folders inside Module
+      mod.subgroups.forEach((group, groupIdx) => {
+        const categoryGroup = document.createElement("div");
+        categoryGroup.className = "sidebar-category-group";
+
+        const categoryHeader = document.createElement("div");
+        categoryHeader.className = "sidebar-category-title collapsible";
+        categoryHeader.innerHTML = `
+          <span>📂 ${group.section}</span>
+          <span class="chevron">▶</span>
+        `;
+
+        const categoryBody = document.createElement("div");
+        categoryBody.className = "sidebar-category-body collapsed";
+
+        // Expand first sub-category by default
+        if (groupIdx === 0) {
+          categoryBody.classList.remove("collapsed");
+          categoryHeader.classList.add("expanded");
+        }
+
+        categoryHeader.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isCollapsed = categoryBody.classList.toggle("collapsed");
+          categoryHeader.classList.toggle("expanded", !isCollapsed);
+        });
+
+        // Tier 3: Document File items
+        group.items.forEach(item => {
+          const a = document.createElement("a");
+          a.className = "nav-item";
+          a.dataset.path = item.path;
+          a.innerHTML = `<span>📄 ${item.title}</span>`;
+          a.addEventListener("click", (e) => {
+            e.stopPropagation();
+            loadMarkdownFile(item.path);
+          });
+          categoryBody.appendChild(a);
+        });
+
+        categoryGroup.appendChild(categoryHeader);
+        categoryGroup.appendChild(categoryBody);
+        moduleBody.appendChild(categoryGroup);
+      });
+
+      moduleGroup.appendChild(moduleHeader);
+      moduleGroup.appendChild(moduleBody);
+      navList.appendChild(moduleGroup);
     });
   }
 
   // Fetch & Load Markdown Content into Canvas
   async function loadMarkdownFile(filePath) {
     try {
-      // Highlight active item in sidebar
+      // Highlight active item & auto-expand both module & subfolder
       document.querySelectorAll(".nav-item").forEach(el => {
-        el.classList.toggle("active", el.dataset.path === filePath);
+        const isActive = el.dataset.path === filePath;
+        el.classList.toggle("active", isActive);
+        if (isActive) {
+          let curr = el;
+          while (curr && curr !== navList) {
+            if (curr.classList.contains("sidebar-category-body") || curr.classList.contains("sidebar-module-body")) {
+              curr.classList.remove("collapsed");
+              if (curr.previousElementSibling) curr.previousElementSibling.classList.add("expanded");
+            }
+            curr = curr.parentElement;
+          }
+        }
       });
 
       const response = await fetch(filePath);
@@ -134,11 +223,24 @@ document.addEventListener('DOMContentLoaded', () => {
       // Scroll to top
       document.querySelector(".content-canvas").scrollTop = 0;
     } catch (err) {
+      const isFileProtocol = window.location.protocol === 'file:';
+      
       markdownBody.innerHTML = `
-        <div style="padding: 40px; text-align: center; color: #ef4444;">
-          <h2>⚠️ File Load Warning</h2>
-          <p style="margin-top: 8px;">Path: <code>${filePath}</code></p>
-          <p style="color: #94a3b8; font-size: 13px;">${err.message}</p>
+        <div style="padding: 40px; text-align: center; max-width: 700px; margin: 0 auto;">
+          <h2 style="color: #ff6b35; margin-bottom: 12px;">📌 Local File Protocol (${window.location.protocol}) Notice</h2>
+          <p style="color: #e2e8f0; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+            ${isFileProtocol ? 
+              `Browsers (Chrome/Edge/Firefox) block direct <code>fetch()</code> requests when double-clicking HTML files via <code>file:///</code> for security reasons.` : 
+              `Unable to fetch document: <code>${filePath}</code>`}
+          </p>
+          ${isFileProtocol ? `
+            <div style="background: #111113; border: 1px solid #333; padding: 20px; border-radius: 8px; text-align: left; margin-top: 20px;">
+              <h4 style="color: #38bdf8; margin-bottom: 10px;">💡 Quick 1-Second Fix for Local Testing:</h4>
+              <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 8px;">Run a quick local web server from your project folder:</p>
+              <pre style="background: #000; padding: 10px 14px; border-radius: 6px; color: #4af626; font-family: monospace; font-size: 13px;">npx serve .</pre>
+              <p style="color: #94a3b8; font-size: 13px; margin-top: 10px;">Or open VSCode and click <strong>"Go Live" (Live Server extension)</strong>!</p>
+            </div>
+          ` : ''}
         </div>
       `;
     }

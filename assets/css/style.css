@@ -232,13 +232,100 @@ html, body {
   flex-shrink: 0;
 }
 
-.sidebar-section-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
+/* Tier 1: Master Module Group */
+.sidebar-module-group {
+  margin-bottom: 12px;
+}
+
+.sidebar-module-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.sidebar-module-title:hover {
+  background: rgba(255, 107, 53, 0.15);
+  border-color: rgba(255, 107, 53, 0.3);
+  color: #ffffff;
+}
+
+.sidebar-module-title .chevron {
+  font-size: 10px;
+  transition: transform 0.2s ease;
   color: #94a3b8;
-  letter-spacing: 1.2px;
-  margin: 20px 12px 8px 12px;
+}
+
+.sidebar-module-title.expanded .chevron {
+  transform: rotate(90deg);
+  color: var(--ubuntu-orange);
+}
+
+.sidebar-module-body {
+  padding-left: 10px;
+  margin-top: 6px;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.sidebar-module-body.collapsed {
+  display: none;
+}
+
+/* Tier 2: Sub-category Folders */
+.sidebar-category-group {
+  margin-bottom: 6px;
+}
+
+.sidebar-category-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.sidebar-category-title:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.sidebar-category-title .chevron {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  color: #71717a;
+}
+
+.sidebar-category-title.expanded .chevron {
+  transform: rotate(90deg);
+  color: var(--ubuntu-orange);
+}
+
+.sidebar-category-body {
+  padding-left: 18px;
+  margin-left: 12px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.sidebar-category-body.collapsed {
+  display: none;
 }
 
 .nav-item {
