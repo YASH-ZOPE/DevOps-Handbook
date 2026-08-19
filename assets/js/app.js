@@ -286,11 +286,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
   function setTerminalMode(mode) {
-    // Reset inline position styles to prevent drag overrides
-    terminalDrawer.style.left = "";
-    terminalDrawer.style.top = "";
-    terminalDrawer.style.right = "";
-    terminalDrawer.style.bottom = "";
+    // Completely clear inline style properties to allow CSS layout modes to take effect
+    terminalDrawer.style.removeProperty("left");
+    terminalDrawer.style.removeProperty("top");
+    terminalDrawer.style.removeProperty("right");
+    terminalDrawer.style.removeProperty("bottom");
+    terminalDrawer.style.removeProperty("width");
+    terminalDrawer.style.removeProperty("height");
+    terminalDrawer.style.removeProperty("transition");
 
     terminalDrawer.classList.remove("hidden", "minimized", "mode-split", "mode-bottom", "mode-float");
     document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
@@ -307,32 +310,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Draggable Floating Terminal Window Handler
+  // Draggable Floating Terminal Window Handler (Mouse + Touch Support)
   let isDragging = false;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
   const terminalHeader = document.querySelector(".terminal-header");
 
-  terminalHeader.addEventListener("mousedown", (e) => {
-    // Only drag when in floating mode
+  function startDrag(clientX, clientY, target) {
     if (terminalDrawer.classList.contains("mode-split") || terminalDrawer.classList.contains("mode-bottom")) {
       return;
     }
-    if (e.target.closest(".traffic-light") || e.target.closest(".mode-btn")) return;
+    if (target.closest(".traffic-light") || target.closest(".mode-btn")) return;
 
     isDragging = true;
+    terminalDrawer.style.transition = "none"; // Disable smooth transition during active dragging
+
     const rect = terminalDrawer.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+    dragOffsetX = clientX - rect.left;
+    dragOffsetY = clientY - rect.top;
 
     terminalHeader.style.cursor = "grabbing";
-  });
+  }
 
-  document.addEventListener("mousemove", (e) => {
+  function moveDrag(clientX, clientY) {
     if (!isDragging) return;
 
-    let left = e.clientX - dragOffsetX;
-    let top = e.clientY - dragOffsetY;
+    let left = clientX - dragOffsetX;
+    let top = clientY - dragOffsetY;
 
     // Keep within viewport bounds
     const maxLeft = window.innerWidth - terminalDrawer.offsetWidth;
@@ -345,14 +349,35 @@ document.addEventListener('DOMContentLoaded', () => {
     terminalDrawer.style.top = `${top}px`;
     terminalDrawer.style.bottom = "auto";
     terminalDrawer.style.right = "auto";
-  });
+  }
 
-  document.addEventListener("mouseup", () => {
+  function stopDrag() {
     if (isDragging) {
       isDragging = false;
+      terminalDrawer.style.transition = ""; // Restore CSS transition
       terminalHeader.style.cursor = "grab";
     }
-  });
+  }
+
+  // Mouse Listeners
+  terminalHeader.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY, e.target));
+  document.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY));
+  document.addEventListener("mouseup", stopDrag);
+
+  // Touch Listeners for Mobile/Tablet Deployment
+  terminalHeader.addEventListener("touchstart", (e) => {
+    if (e.touches && e.touches.length === 1) {
+      startDrag(e.touches[0].clientX, e.touches[0].clientY, e.target);
+    }
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (isDragging && e.touches && e.touches.length === 1) {
+      moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  document.addEventListener("touchend", stopDrag);
 
   // Event Listeners for Header & Layout Buttons
   document.getElementById("btn-toggle-terminal").addEventListener("click", toggleTerminal);

@@ -490,11 +490,12 @@ html, body {
 
 /* Mode 1: Side-by-Side Split View (48% right screen) */
 .terminal-drawer.mode-split {
-  top: var(--header-height);
-  right: 0;
-  bottom: 0;
-  width: 48vw;
-  height: calc(100vh - var(--header-height));
+  top: var(--header-height) !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  width: 48vw !important;
+  height: calc(100vh - var(--header-height)) !important;
   border-radius: 0;
   border-left: 2px solid var(--ubuntu-orange);
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.7);
@@ -502,11 +503,12 @@ html, body {
 
 /* Mode 2: Bottom Dock Split View (42% bottom screen) */
 .terminal-drawer.mode-bottom {
-  left: var(--sidebar-width);
-  right: 0;
-  bottom: 0;
-  width: calc(100vw - var(--sidebar-width));
-  height: 42vh;
+  left: var(--sidebar-width) !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: auto !important;
+  width: calc(100vw - var(--sidebar-width)) !important;
+  height: 42vh !important;
   border-radius: 0;
   border-top: 2px solid var(--ubuntu-orange);
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
