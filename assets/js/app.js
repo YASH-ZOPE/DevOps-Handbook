@@ -284,8 +284,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Event Listeners for Header Buttons
+  // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
+  function setTerminalMode(mode) {
+    // Reset inline position styles to prevent drag overrides
+    terminalDrawer.style.left = "";
+    terminalDrawer.style.top = "";
+    terminalDrawer.style.right = "";
+    terminalDrawer.style.bottom = "";
+
+    terminalDrawer.classList.remove("hidden", "minimized", "mode-split", "mode-bottom", "mode-float");
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+
+    if (mode === "side") {
+      terminalDrawer.classList.add("mode-split");
+      document.getElementById("btn-mode-side").classList.add("active");
+    } else if (mode === "bottom") {
+      terminalDrawer.classList.add("mode-bottom");
+      document.getElementById("btn-mode-bottom").classList.add("active");
+    } else {
+      terminalDrawer.classList.add("mode-float");
+      document.getElementById("btn-mode-float").classList.add("active");
+    }
+  }
+
+  // Draggable Floating Terminal Window Handler
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  const terminalHeader = document.querySelector(".terminal-header");
+
+  terminalHeader.addEventListener("mousedown", (e) => {
+    // Only drag when in floating mode
+    if (terminalDrawer.classList.contains("mode-split") || terminalDrawer.classList.contains("mode-bottom")) {
+      return;
+    }
+    if (e.target.closest(".traffic-light") || e.target.closest(".mode-btn")) return;
+
+    isDragging = true;
+    const rect = terminalDrawer.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+
+    terminalHeader.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    let left = e.clientX - dragOffsetX;
+    let top = e.clientY - dragOffsetY;
+
+    // Keep within viewport bounds
+    const maxLeft = window.innerWidth - terminalDrawer.offsetWidth;
+    const maxTop = window.innerHeight - terminalDrawer.offsetHeight;
+
+    left = Math.max(0, Math.min(left, maxLeft));
+    top = Math.max(64, Math.min(top, maxTop));
+
+    terminalDrawer.style.left = `${left}px`;
+    terminalDrawer.style.top = `${top}px`;
+    terminalDrawer.style.bottom = "auto";
+    terminalDrawer.style.right = "auto";
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      terminalHeader.style.cursor = "grab";
+    }
+  });
+
+  // Event Listeners for Header & Layout Buttons
   document.getElementById("btn-toggle-terminal").addEventListener("click", toggleTerminal);
+  document.getElementById("btn-split-screen").addEventListener("click", () => setTerminalMode("side"));
+  document.getElementById("btn-mode-side").addEventListener("click", () => setTerminalMode("side"));
+  document.getElementById("btn-mode-bottom").addEventListener("click", () => setTerminalMode("bottom"));
+  document.getElementById("btn-mode-float").addEventListener("click", () => setTerminalMode("float"));
+
   document.getElementById("close-terminal").addEventListener("click", () => terminalDrawer.classList.add("hidden"));
   document.getElementById("minimize-terminal").addEventListener("click", () => terminalDrawer.classList.toggle("minimized"));
 

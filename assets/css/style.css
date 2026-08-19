@@ -4,30 +4,30 @@
    ========================================================================== */
 
 :root {
-  /* Color Palette - Linux Terminal Pure Black */
+  /* Color Palette - Linux Terminal Pure Black with High Contrast */
   --bg-primary: #050505;
-  --bg-secondary: #0f0f0f;
-  --bg-tertiary: #1a1a1a;
+  --bg-secondary: #111113;
+  --bg-tertiary: #1f1f23;
   --text-primary: #f8fafc;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
   --border-color: #27272a;
   
-  /* Brand & Accents */
-  --ubuntu-orange: #e95420;
-  --ubuntu-purple: #77216f;
+  /* Brand & Accents (Warmer, eye-friendly high contrast) */
+  --ubuntu-orange: #ff6b35;
+  --ubuntu-purple: #8b2880;
   --ubuntu-aubergine: #300a24;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
-  --accent-blue: #3b82f6;
-  --accent-amber: #f59e0b;
+  --accent-cyan: #38bdf8;
+  --accent-green: #34d399;
+  --accent-blue: #60a5fa;
+  --accent-amber: #fbbf24;
   
   /* Code & Terminal */
   --code-bg: #000000;
   --terminal-bg: #300a24;
   --terminal-header: #24071b;
   --terminal-text: #4af626;
-  --terminal-prompt: #e95420;
+  --terminal-prompt: #ff6b35;
   
   /* Layout Spacing */
   --header-height: 64px;
@@ -236,9 +236,9 @@ html, body {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  margin: 16px 12px 8px 12px;
+  color: #94a3b8;
+  letter-spacing: 1.2px;
+  margin: 20px 12px 8px 12px;
 }
 
 .nav-item {
@@ -246,8 +246,8 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: #d1d5db;
+  font-size: 13.5px;
   font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
@@ -257,15 +257,15 @@ html, body {
 }
 
 .nav-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: #1f1f24;
+  color: #ffffff;
 }
 
 .nav-item.active {
-  background: rgba(233, 84, 32, 0.15);
-  color: var(--ubuntu-orange);
-  font-weight: 600;
-  border-left: 3px solid var(--ubuntu-orange);
+  background: rgba(255, 107, 53, 0.22);
+  color: #ff8c5a;
+  font-weight: 700;
+  border-left: 4px solid var(--ubuntu-orange);
 }
 
 .nav-badge {
@@ -276,15 +276,15 @@ html, body {
 }
 
 .badge-2yoe {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(52, 211, 153, 0.2);
   color: var(--accent-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(52, 211, 153, 0.4);
 }
 
 .badge-5yoe {
-  background: rgba(233, 84, 32, 0.2);
+  background: rgba(255, 107, 53, 0.2);
   color: var(--ubuntu-orange);
-  border: 1px solid rgba(233, 84, 32, 0.3);
+  border: 1px solid rgba(255, 107, 53, 0.4);
 }
 
 /* Full-Screen Main Content Canvas */
@@ -299,9 +299,9 @@ html, body {
 .markdown-body {
   max-width: 1100px;
   margin: 0 auto;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--text-primary);
+  font-size: 16.5px;
+  line-height: 1.8;
+  color: #e2e8f0;
 }
 
 .markdown-body h1 {
@@ -309,48 +309,55 @@ html, body {
   font-weight: 800;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-color);
-  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .markdown-body h2 {
   font-size: 22px;
   font-weight: 700;
-  margin-top: 36px;
+  margin-top: 38px;
   margin-bottom: 16px;
-  color: var(--ubuntu-orange);
+  color: #ff7d45;
 }
 
 .markdown-body h3 {
   font-size: 18px;
   font-weight: 600;
-  margin-top: 24px;
+  margin-top: 26px;
   margin-bottom: 12px;
   color: var(--accent-cyan);
 }
 
 .markdown-body p {
-  margin-bottom: 16px;
-  color: var(--text-secondary);
+  margin-bottom: 18px;
+  color: #e2e8f0;
+  font-weight: 400;
 }
 
 .markdown-body ul, .markdown-body ol {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   padding-left: 24px;
-  color: var(--text-secondary);
+  color: #e2e8f0;
 }
 
 .markdown-body li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 32px 0;
 }
 
 .markdown-body blockquote {
   border-left: 4px solid var(--ubuntu-orange);
-  background: rgba(233, 84, 32, 0.08);
+  background: rgba(255, 107, 53, 0.08);
   padding: 14px 20px;
   margin: 20px 0;
   border-radius: 0 8px 8px 0;
-  color: var(--text-primary);
+  color: #f1f5f9;
   font-style: italic;
 }
 
@@ -452,11 +459,13 @@ html, body {
 
 .markdown-body code:not(pre code) {
   font-family: var(--font-mono);
-  background: rgba(233, 84, 32, 0.12);
-  color: var(--ubuntu-orange);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 13px;
+  background: rgba(255, 107, 53, 0.18);
+  color: #ff9d76;
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 13.5px;
+  font-weight: 500;
 }
 
 /* ==========================================================================
@@ -475,8 +484,32 @@ html, body {
   flex-direction: column;
   z-index: 1000;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
   transform: translateY(0);
+}
+
+/* Mode 1: Side-by-Side Split View (48% right screen) */
+.terminal-drawer.mode-split {
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
+  width: 48vw;
+  height: calc(100vh - var(--header-height));
+  border-radius: 0;
+  border-left: 2px solid var(--ubuntu-orange);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.7);
+}
+
+/* Mode 2: Bottom Dock Split View (42% bottom screen) */
+.terminal-drawer.mode-bottom {
+  left: var(--sidebar-width);
+  right: 0;
+  bottom: 0;
+  width: calc(100vw - var(--sidebar-width));
+  height: 42vh;
+  border-radius: 0;
+  border-top: 2px solid var(--ubuntu-orange);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
 }
 
 .terminal-drawer.minimized {
@@ -491,6 +524,36 @@ html, body {
   pointer-events: none;
 }
 
+.terminal-layout-modes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d1d5db;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.mode-btn.active {
+  background: var(--ubuntu-orange);
+  border-color: var(--ubuntu-orange);
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .terminal-header {
   height: 44px;
   background: var(--terminal-header);
@@ -500,6 +563,10 @@ html, body {
   padding: 0 16px;
   user-select: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.terminal-drawer:not(.mode-split):not(.mode-bottom) .terminal-header {
+  cursor: grab;
 }
 
 .terminal-controls {

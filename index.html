@@ -29,6 +29,10 @@
         <span class="kbd">Ctrl + K</span>
       </button>
 
+      <button class="action-btn" id="btn-split-screen" title="Read and run commands side-by-side">
+        <span>📖 Split View</span>
+      </button>
+
       <button class="action-btn terminal-launch-btn" id="btn-toggle-terminal">
         <span>💻 Launch Ubuntu Terminal</span>
       </button>
@@ -67,7 +71,11 @@
       <div class="terminal-title">
         <span>🐧 ubuntu@ubuntu-devops: ~</span>
       </div>
-      <div></div>
+      <div class="terminal-layout-modes">
+        <button class="mode-btn active" id="btn-mode-side" title="Side-by-Side Split View">🖥️ Side Split</button>
+        <button class="mode-btn" id="btn-mode-bottom" title="Bottom Dock Split View">⬇️ Bottom Dock</button>
+        <button class="mode-btn" id="btn-mode-float" title="Floating Modal Window">🔲 Floating</button>
+      </div>
     </div>
 
     <div class="terminal-body">
