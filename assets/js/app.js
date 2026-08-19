@@ -1,5 +1,5 @@
 /* ==========================================================================
-   DevOps Handbook - Main Application Logic & Terminal Interoperability
+   DevOps Handbook - Dynamic Manifest-Based Application Logic
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,53 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const terminalInput = document.getElementById('terminal-input');
   const terminalPromptPath = document.getElementById('terminal-prompt-path');
 
-  // Navigation Items Map (All Modules & Roadmaps)
-  const navTree = [
-    {
-      section: "🌟 Overviews & Plans",
-      items: [
-        { title: "Master Senior Roadmap", path: "ROADMAP.md", badge: "Master", level: "5yoe" },
-        { title: "Next Direction & Features", path: "NEXT_DIRECTION.md", badge: "Plan", level: "2yoe" }
-      ]
-    },
-    {
-      section: " Module 01: Linux Administration",
-      items: [
-        { title: "01. Linux Basics", path: "01-Linux/01-linux-basics/ls.md" },
-        { title: "02. Navigation", path: "01-Linux/02-navigation-commands/cd.md" },
-        { title: "03. File & Directory Ops", path: "01-Linux/03-file-directory-management/mkdir.md" },
-        { title: "04. File Viewing & Editing", path: "01-Linux/04-file-viewing-editing/cat.md" },
-        { title: "07. Text Processing (Grep)", path: "01-Linux/07-text-processing/grep.md" },
-        { title: "08. Process Management", path: "01-Linux/08-process-management/ps.md" },
-        { title: "13. File Permissions", path: "01-Linux/13-file-permissions/chmod.md" },
-        { title: "15. Remote Access (SSH)", path: "01-Linux/15-remote-access/ssh.md" },
-        { title: "16. Compression (Tar)", path: "01-Linux/16-compression-archiving/tar.md" }
-      ]
-    },
-    {
-      section: "🐙 Module 02: Git & GitHub",
-      items: [
-        { title: "Git & GitHub (2 YOE Core)", path: "02-Git-GitHub/2-yoe-git-and-github-scope.md", badge: "2 YOE", level: "2yoe" },
-        { title: "Git & GitHub (5+ YOE Senior)", path: "02-Git-GitHub/git-and-github-roadmap.md", badge: "5+ YOE", level: "5yoe" }
-      ]
-    },
-    {
-      section: "🐳 Module 03: Docker & Compose",
-      items: [
-        { title: "Docker Scope (2 YOE Core)", path: "03-Docker/2-yoe-docker-scope.md", badge: "2 YOE", level: "2yoe" },
-        { title: "Docker Scope (5+ YOE Senior)", path: "03-Docker/docker-and-docker-compose.md", badge: "5+ YOE", level: "5yoe" }
-      ]
-    },
-    {
-      section: "🏗️ Module 07: Terraform IaC",
-      items: [
-        { title: "Terraform Scope (2 YOE Core)", path: "07-Terraform/2-yoe-terraform-scope.md", badge: "2 YOE", level: "2yoe" },
-        { title: "Terraform Scope (5+ YOE Senior)", path: "07-Terraform/terraform.md", badge: "5+ YOE", level: "5yoe" }
-      ]
-    }
-  ];
+  let allFilesList = [];
+  let navTree = [];
 
-  // Configure Marked Options for Code Blocks
+  // Configure Marked Options
   if (window.marked) {
     marked.setOptions({
       gfm: true,
@@ -68,7 +25,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Build Sidebar Nav UI
+  // Helper to format directory & file names into clean human titles
+  function formatTitle(name) {
+    return name
+      .replace(/^\d+-/, '') // remove leading numbers like '01-'
+      .replace(/\.md$/, '') // remove .md
+      .replace(/[-_]/g, ' ') // replace dash/underscore with space
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  // Dynamically Load Manifest & Build Dynamic Navigation Tree
+  async function loadManifestAndBuildNav() {
+    try {
+      const response = await fetch('assets/data/manifest.json');
+      if (!response.ok) {
+        throw new Error('Could not load assets/data/manifest.json');
+      }
+      allFilesList = await response.json();
+
+      // Group paths dynamically by folder structure
+      const groupsMap = {};
+
+      allFilesList.forEach(path => {
+        if (path === 'README.md') {
+          if (!groupsMap['Overview']) groupsMap['Overview'] = [];
+          groupsMap['Overview'].push({ title: 'DevOps Handbook Overview', path });
+          return;
+        }
+
+        const parts = path.split('/');
+        if (parts.length >= 2) {
+          const categoryFolder = parts[1] || parts[0];
+          const sectionTitle = formatTitle(categoryFolder);
+          const fileName = parts[parts.length - 1];
+          const itemTitle = fileName.replace(/\.md$/, '');
+
+          if (!groupsMap[sectionTitle]) {
+            groupsMap[sectionTitle] = [];
+          }
+          groupsMap[sectionTitle].push({ title: itemTitle, path });
+        }
+      });
+
+      // Convert map to navTree structure
+      navTree = Object.keys(groupsMap).map(section => ({
+        section: section,
+        items: groupsMap[section]
+      }));
+
+      renderSidebar();
+      buildSearchIndex();
+      
+      // Initial file load
+      loadMarkdownFile('README.md');
+    } catch (err) {
+      markdownBody.innerHTML = `
+        <div style="padding: 40px; text-align: center; color: #ef4444;">
+          <h2>⚠️ Manifest Loading Error</h2>
+          <p style="color: #94a3b8; font-size: 14px;">${err.message}</p>
+        </div>
+      `;
+    }
+  }
+
+  // Render Dynamic Sidebar
   function renderSidebar() {
     navList.innerHTML = "";
     navTree.forEach(group => {
@@ -81,14 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const a = document.createElement("a");
         a.className = "nav-item";
         a.dataset.path = item.path;
-        
-        let badgeHtml = "";
-        if (item.badge) {
-          const badgeClass = item.level === "2yoe" ? "badge-2yoe" : "badge-5yoe";
-          badgeHtml = `<span class="nav-badge ${badgeClass}">${item.badge}</span>`;
-        }
-        
-        a.innerHTML = `<span>${item.title}</span> ${badgeHtml}`;
+        a.innerHTML = `<span>${item.title}</span>`;
         a.addEventListener("click", () => loadMarkdownFile(item.path));
         navList.appendChild(a);
       });
@@ -105,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch(filePath);
       if (!response.ok) {
-        throw new Error(`Failed to load ${filePath}`);
+        throw new Error(`File '${filePath}' could not be fetched.`);
       }
       const rawText = await response.text();
 
@@ -121,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       markdownBody.innerHTML = `
         <div style="padding: 40px; text-align: center; color: #ef4444;">
-          <h2>⚠️ Unable to load document</h2>
-          <p style="margin-top: 8px;">File path: <code>${filePath}</code></p>
+          <h2>⚠️ File Load Warning</h2>
+          <p style="margin-top: 8px;">Path: <code>${filePath}</code></p>
           <p style="color: #94a3b8; font-size: 13px;">${err.message}</p>
         </div>
       `;
@@ -187,6 +202,37 @@ document.addEventListener('DOMContentLoaded', () => {
           executeInTerminal(firstLine);
         });
       }
+    });
+  }
+
+  // Search Index Builder
+  function buildSearchIndex() {
+    searchInput.addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      searchResults.innerHTML = "";
+
+      if (!query) return;
+
+      const matches = allFilesList.filter(path => path.toLowerCase().includes(query));
+      
+      if (matches.length === 0) {
+        searchResults.innerHTML = `<div style="padding: 16px; color: #94a3b8; text-align: center;">No matching tracked files found.</div>`;
+        return;
+      }
+
+      matches.slice(0, 10).forEach(path => {
+        const item = document.createElement("div");
+        item.className = "search-result-item";
+        item.innerHTML = `
+          <div class="search-result-title">${formatTitle(path.split('/').pop())}</div>
+          <div class="search-result-snippet">${path}</div>
+        `;
+        item.addEventListener("click", () => {
+          searchModal.classList.remove("active");
+          loadMarkdownFile(path);
+        });
+        searchResults.appendChild(item);
+      });
     });
   }
 
@@ -266,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initial Setup
-  renderSidebar();
-  loadMarkdownFile("ROADMAP.md");
+  // Start Application with Dynamic Manifest
+  loadManifestAndBuildNav();
 });
