@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Handbook — Full-Screen Platform & Ubuntu Terminal</title>
+  
+  <!-- Fonts & CDN Markdown Parser -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Main Full-Screen Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="header">
+    <div class="logo-container">
+      <span class="logo-title">DevOps Handbook</span>
+      <span class="logo-subtitle">Full-Screen Studio</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="search-btn" id="btn-search">
+        <span>🔍 Search Handbook...</span>
+        <span class="kbd">Ctrl + K</span>
+      </button>
+
+      <button class="action-btn terminal-launch-btn" id="btn-toggle-terminal">
+        <span>💻 Launch Ubuntu Terminal</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- App Main Layout Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation Tree -->
+    <aside class="sidebar">
+      <div id="nav-list">
+        <!-- Dynamically rendered via app.js -->
+      </div>
+    </aside>
+
+    <!-- Main Reading Canvas (Full Screen Width) -->
+    <main class="content-canvas">
+      <article class="markdown-body" id="markdown-body">
+        <div style="padding: 60px 0; text-align: center;">
+          <h2 style="color: var(--ubuntu-orange);">Loading DevOps Handbook...</h2>
+        </div>
+      </article>
+    </main>
+
+  </div>
+
+  <!-- Interactive Ubuntu Terminal Drawer -->
+  <div class="terminal-drawer hidden" id="terminal-drawer">
+    <div class="terminal-header">
+      <div class="terminal-controls">
+        <span class="traffic-light close" id="close-terminal" title="Close Terminal"></span>
+        <span class="traffic-light minimize" id="minimize-terminal" title="Minimize Terminal"></span>
+        <span class="traffic-light maximize" id="maximize-terminal" title="Maximize"></span>
+      </div>
+      <div class="terminal-title">
+        <span>🐧 ubuntu@ubuntu-devops: ~</span>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="terminal-body">
+      <div class="terminal-output" id="terminal-output">
+        <div style="color: #888888; margin-bottom: 8px;">Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-28-generic x86_64)</div>
+        <div style="color: #e95420; font-weight: bold; margin-bottom: 12px;">📌 Interactive Ubuntu Terminal Simulator active! Type 'help' or 'ls -l' to start.</div>
+      </div>
+
+      <div class="terminal-input-row">
+        <span class="terminal-prompt-prefix"><span style="color:#4af626">ubuntu@ubuntu-devops</span>:<span style="color:#34e2e2" id="terminal-prompt-path">/home/ubuntu</span>$</span>
+        <input type="text" class="terminal-input" id="terminal-input" placeholder="Type Linux command (e.g. ls, cd /var/log, grep, cat notes.txt)..." autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Instant Search Modal (Ctrl + K) -->
+  <div class="modal-backdrop" id="search-modal">
+    <div class="search-modal">
+      <div class="search-input-wrapper">
+        <span style="font-size: 18px;">🔍</span>
+        <input type="text" class="search-modal-input" id="search-input" placeholder="Search commands, topics, or workflows (e.g. grep, docker, terraform)..." />
+      </div>
+      <div class="search-results" id="search-results">
+        <div class="search-result-item">
+          <div class="search-result-title">07. Text Processing — grep Command</div>
+          <div class="search-result-snippet">Search for regular expression patterns in log files and text streams...</div>
+        </div>
+        <div class="search-result-item">
+          <div class="search-result-title">Git & GitHub — 2 YOE Core Scope</div>
+          <div class="search-result-snippet">Master daily Git branching, PR review workflows, and GitHub Actions CI...</div>
+        </div>
+        <div class="search-result-item">
+          <div class="search-result-title">Docker & Docker Compose — 2 YOE Core Scope</div>
+          <div class="search-result-snippet">Dockerfile multi-stage builds, volume mounts, container networking...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="assets/js/ubuntu-terminal.js"></script>
+  <script src="assets/js/app.js"></script>
+
+</body>
+</html>
