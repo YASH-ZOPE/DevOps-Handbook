@@ -575,6 +575,38 @@ html, body {
   transform: translateY(0);
 }
 
+/* Resizable Split Handle */
+.terminal-resizer {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.terminal-drawer.mode-split .terminal-resizer {
+  display: block;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+}
+
+.terminal-drawer.mode-bottom .terminal-resizer {
+  display: block;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: row-resize;
+}
+
+.terminal-resizer:hover, .terminal-resizer.resizing {
+  background: var(--ubuntu-orange) !important;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
+}
+
 /* Mode 1: Side-by-Side Split View (48% right screen) */
 .terminal-drawer.mode-split {
   top: var(--header-height) !important;

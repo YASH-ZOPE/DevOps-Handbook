@@ -217,7 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const renderedHtml = window.marked ? marked.parse(rawText) : `<pre>${rawText}</pre>`;
       markdownBody.innerHTML = renderedHtml;
 
-      // Enhance Code Blocks with "Run in Terminal" & "Copy" buttons
+      // Intercept Inline Markdown Links & Enhance Code Blocks
+      interceptInlineLinks(filePath);
       enhanceCodeBlocks();
       
       // Scroll to top
@@ -244,6 +245,59 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }
+  }
+
+  // Resolve Relative Markdown Links (e.g. '../02-navigation-commands/cd.md' -> '01-Linux/02-navigation-commands/cd.md')
+  function resolveRelativePath(currentPath, targetHref) {
+    if (targetHref.startsWith("http://") || targetHref.startsWith("https://") || targetHref.startsWith("mailto:") || targetHref.startsWith("#")) {
+      return targetHref;
+    }
+
+    let cleanTarget = targetHref.replace(/^\.\//, '');
+    const currentParts = currentPath.split('/');
+    currentParts.pop(); // Remove filename to leave directory path
+
+    const targetParts = cleanTarget.split('/');
+
+    for (let part of targetParts) {
+      if (part === '..') {
+        if (currentParts.length > 0) currentParts.pop();
+      } else if (part !== '.' && part !== '') {
+        currentParts.push(part);
+      }
+    }
+
+    let resolved = currentParts.join('/');
+
+    // If resolved path does not end in .md, try matching tracked files
+    if (!resolved.endsWith('.md') && allFilesList && allFilesList.length > 0) {
+      const folderMatch = allFilesList.find(f => f.startsWith(resolved + '/'));
+      if (folderMatch) {
+        return folderMatch;
+      }
+    }
+
+    return resolved;
+  }
+
+  // Intercept Clicks on Inline Links inside Markdown Body
+  function interceptInlineLinks(currentFilePath) {
+    const links = markdownBody.querySelectorAll("a[href]");
+    links.forEach(link => {
+      const href = link.getAttribute("href");
+      if (!href) return;
+
+      if (href.startsWith("http://") || href.startsWith("https://")) {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+      } else if (!href.startsWith("#")) {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const resolvedPath = resolveRelativePath(currentFilePath, href);
+          loadMarkdownFile(resolvedPath);
+        });
+      }
+    });
   }
 
   // Inject Custom Action Bar on Code Blocks
@@ -386,6 +440,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const contentCanvas = document.querySelector(".content-canvas");
+
+  // Dynamically Adjust Reading Content Canvas Padding so text is never covered by Split Terminal
+  function updateCanvasPadding() {
+    if (!contentCanvas) return;
+    
+    if (terminalDrawer.classList.contains("hidden") || terminalDrawer.classList.contains("minimized")) {
+      contentCanvas.style.paddingRight = "";
+      contentCanvas.style.paddingBottom = "";
+      return;
+    }
+
+    if (terminalDrawer.classList.contains("mode-split")) {
+      const termWidth = terminalDrawer.offsetWidth;
+      contentCanvas.style.paddingRight = `${termWidth + 24}px`;
+      contentCanvas.style.paddingBottom = "";
+    } else if (terminalDrawer.classList.contains("mode-bottom")) {
+      const termHeight = terminalDrawer.offsetHeight;
+      contentCanvas.style.paddingBottom = `${termHeight + 24}px`;
+      contentCanvas.style.paddingRight = "";
+    } else {
+      contentCanvas.style.paddingRight = "";
+      contentCanvas.style.paddingBottom = "";
+    }
+  }
+
   // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
   function setTerminalMode(mode) {
     // Completely clear inline style properties to allow CSS layout modes to take effect
@@ -410,6 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
       terminalDrawer.classList.add("mode-float");
       document.getElementById("btn-mode-float").classList.add("active");
     }
+
+    setTimeout(updateCanvasPadding, 30);
   }
 
   // Draggable Floating Terminal Window Handler (Mouse + Touch Support)
@@ -453,6 +535,55 @@ document.addEventListener('DOMContentLoaded', () => {
     terminalDrawer.style.right = "auto";
   }
 
+  // Resizable Split Pane Handle Logic
+  const resizer = document.getElementById("terminal-resizer");
+  let isResizing = false;
+
+  if (resizer) {
+    resizer.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      resizer.classList.add("resizing");
+      terminalDrawer.style.transition = "none";
+      document.body.style.userSelect = "none";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isResizing) return;
+
+      if (terminalDrawer.classList.contains("mode-split")) {
+        // Horizontal resize (Left/Right)
+        const newWidth = window.innerWidth - e.clientX;
+        const minWidth = 300;
+        const maxWidth = window.innerWidth - 340; // leave sidebar & canvas readable
+
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
+          terminalDrawer.style.setProperty("width", `${newWidth}px`, "important");
+          updateCanvasPadding();
+        }
+      } else if (terminalDrawer.classList.contains("mode-bottom")) {
+        // Vertical resize (Up/Down)
+        const newHeight = window.innerHeight - e.clientY;
+        const minHeight = 140;
+        const maxHeight = window.innerHeight - 100;
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+          terminalDrawer.style.setProperty("height", `${newHeight}px`, "important");
+          updateCanvasPadding();
+        }
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (isResizing) {
+        isResizing = false;
+        resizer.classList.remove("resizing");
+        terminalDrawer.style.transition = "";
+        document.body.style.userSelect = "";
+        updateCanvasPadding();
+      }
+    });
+  }
+
   function stopDrag() {
     if (isDragging) {
       isDragging = false;
@@ -488,8 +619,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("btn-mode-bottom").addEventListener("click", () => setTerminalMode("bottom"));
   document.getElementById("btn-mode-float").addEventListener("click", () => setTerminalMode("float"));
 
-  document.getElementById("close-terminal").addEventListener("click", () => terminalDrawer.classList.add("hidden"));
-  document.getElementById("minimize-terminal").addEventListener("click", () => terminalDrawer.classList.toggle("minimized"));
+  document.getElementById("close-terminal").addEventListener("click", () => {
+    terminalDrawer.classList.add("hidden");
+    updateCanvasPadding();
+  });
+  document.getElementById("minimize-terminal").addEventListener("click", () => {
+    terminalDrawer.classList.toggle("minimized");
+    updateCanvasPadding();
+  });
 
   // Search Modal (Ctrl + K)
   document.getElementById("btn-search").addEventListener("click", openSearchModal);

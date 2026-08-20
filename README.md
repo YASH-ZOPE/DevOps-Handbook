@@ -9,22 +9,22 @@ Welcome to the DevOps Handbook!
 ## 📚 Learning Order
 
 ### Module 01: Linux Commands & System Administration
-1. [Linux Basics](./01-Linux/01-linux-basics)
-2. [Navigation Commands](./01-Linux/02-navigation-commands)
-3. [File & Directory Management](./01-Linux/03-file-directory-management)
-4. [File Viewing & Editing](./01-Linux/04-file-viewing-editing)
-5. [File Information](./01-Linux/05-file-information)
-6. [File Links](./01-Linux/06-file-links)
-7. [Text Processing](./01-Linux/07-text-processing)
-8. [Process Management](./01-Linux/08-process-management)
-9. [Disk & Memory Management](./01-Linux/09-disk-memory-management)
-10. [System Information](./01-Linux/10-system-information)
-11. [System Control](./01-Linux/11-system-control)
-12. [User & Group Management](./01-Linux/12-user-group-management)
-13. [File Permissions](./01-Linux/13-file-permissions)
-14. [Package Management](./01-Linux/14-package-management)
-15. [Remote Access](./01-Linux/15-remote-access)
-16. [Compression & Archiving](./01-Linux/16-compression-archiving)
+1. [Linux Basics](./01-Linux/01-linux-basics/linux-basics.md)
+2. [Navigation Commands](./01-Linux/02-navigation-commands/pwd.md)
+3. [File & Directory Management](./01-Linux/03-file-directory-management/mkdir.md)
+4. [File Viewing & Editing](./01-Linux/04-file-viewing-editing/cat.md)
+5. [File Information](./01-Linux/05-file-information/file.md)
+6. [File Links](./01-Linux/06-file-links/ln.md)
+7. [Text Processing](./01-Linux/07-text-processing/grep.md)
+8. [Process Management](./01-Linux/08-process-management/ps.md)
+9. [Disk & Memory Management](./01-Linux/09-disk-memory-management/df.md)
+10. [System Information](./01-Linux/10-system-information/uname.md)
+11. [System Control](./01-Linux/11-system-control/systemctl.md)
+12. [User & Group Management](./01-Linux/12-user-group-management/useradd.md)
+13. [File Permissions](./01-Linux/13-file-permissions/chmod.md)
+14. [Package Management](./01-Linux/14-package-management/apt.md)
+15. [Remote Access](./01-Linux/15-remote-access/ssh.md)
+16. [Compression & Archiving](./01-Linux/16-compression-archiving/tar.md)
 
 ---
 
