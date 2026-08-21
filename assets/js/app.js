@@ -681,6 +681,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ========================
+  // Light / Dark Mode Toggle
+  // ========================
+  const themeToggleBtn = document.getElementById("btn-theme-toggle");
+  const themeIcon = document.getElementById("theme-toggle-icon");
+  const themeLabel = document.getElementById("theme-toggle-label");
+
+  function applyTheme(theme) {
+    if (theme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      themeIcon.textContent = "🌙";
+      themeLabel.textContent = "Dark Mode";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      themeIcon.textContent = "☀️";
+      themeLabel.textContent = "Light Mode";
+    }
+    localStorage.setItem("devops-handbook-theme", theme);
+  }
+
+  themeToggleBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "light" ? "dark" : "light");
+  });
+
+  // Restore saved theme preference on page load
+  const savedTheme = localStorage.getItem("devops-handbook-theme") || "dark";
+  applyTheme(savedTheme);
+
   // Start Application with Dynamic Manifest
   loadManifestAndBuildNav();
 });
