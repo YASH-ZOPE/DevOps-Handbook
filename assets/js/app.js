@@ -398,10 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function toggleTerminal() {
+    const btnSplitScreen = document.getElementById("btn-split-screen");
     if (terminalDrawer.classList.contains("hidden")) {
       terminalDrawer.classList.remove("hidden", "minimized");
+      updateCanvasPadding();
     } else {
       terminalDrawer.classList.add("hidden");
+      if (btnSplitScreen) btnSplitScreen.classList.remove("active");
+      updateCanvasPadding();
     }
   }
 
@@ -592,6 +596,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Toggle Terminal View Modes (Clicking active mode again closes the window)
+  function handleModeToggle(targetMode) {
+    const isVisible = !terminalDrawer.classList.contains("hidden");
+    let isCurrentMode = false;
+
+    if (targetMode === "side" && terminalDrawer.classList.contains("mode-split")) isCurrentMode = true;
+    else if (targetMode === "bottom" && terminalDrawer.classList.contains("mode-bottom")) isCurrentMode = true;
+    else if (targetMode === "float" && (!terminalDrawer.classList.contains("mode-split") && !terminalDrawer.classList.contains("mode-bottom"))) isCurrentMode = true;
+
+    const btnSplitScreen = document.getElementById("btn-split-screen");
+
+    // If visible AND already in target mode: CLOSE/HIDE window on second click!
+    if (isVisible && isCurrentMode) {
+      terminalDrawer.classList.add("hidden");
+      if (btnSplitScreen) btnSplitScreen.classList.remove("active");
+      updateCanvasPadding();
+    } else {
+      setTerminalMode(targetMode);
+      if (btnSplitScreen) {
+        btnSplitScreen.classList.toggle("active", targetMode === "side");
+      }
+    }
+  }
+
   // Mouse Listeners
   terminalHeader.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY, e.target));
   document.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY));
@@ -614,13 +642,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event Listeners for Header & Layout Buttons
   document.getElementById("btn-toggle-terminal").addEventListener("click", toggleTerminal);
-  document.getElementById("btn-split-screen").addEventListener("click", () => setTerminalMode("side"));
-  document.getElementById("btn-mode-side").addEventListener("click", () => setTerminalMode("side"));
-  document.getElementById("btn-mode-bottom").addEventListener("click", () => setTerminalMode("bottom"));
-  document.getElementById("btn-mode-float").addEventListener("click", () => setTerminalMode("float"));
+  document.getElementById("btn-split-screen").addEventListener("click", () => handleModeToggle("side"));
+  document.getElementById("btn-mode-side").addEventListener("click", () => handleModeToggle("side"));
+  document.getElementById("btn-mode-bottom").addEventListener("click", () => handleModeToggle("bottom"));
+  document.getElementById("btn-mode-float").addEventListener("click", () => handleModeToggle("float"));
 
   document.getElementById("close-terminal").addEventListener("click", () => {
     terminalDrawer.classList.add("hidden");
+    const btnSplitScreen = document.getElementById("btn-split-screen");
+    if (btnSplitScreen) btnSplitScreen.classList.remove("active");
     updateCanvasPadding();
   });
   document.getElementById("minimize-terminal").addEventListener("click", () => {
