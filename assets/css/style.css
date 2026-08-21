@@ -881,6 +881,7 @@ html, body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  cursor: text;
 }
 
 .terminal-output {

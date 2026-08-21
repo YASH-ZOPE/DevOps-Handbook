@@ -395,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Terminal UI Controls
   function openTerminal() {
     terminalDrawer.classList.remove("hidden", "minimized");
+    setTimeout(() => terminalInput.focus(), 50);
   }
 
   function toggleTerminal() {
@@ -402,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (terminalDrawer.classList.contains("hidden")) {
       terminalDrawer.classList.remove("hidden", "minimized");
       updateCanvasPadding();
+      setTimeout(() => terminalInput.focus(), 50);
     } else {
       terminalDrawer.classList.add("hidden");
       if (btnSplitScreen) btnSplitScreen.classList.remove("active");
@@ -443,6 +445,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // Clicking Anywhere inside the Terminal Body auto-focuses the Terminal Input Prompt
+  const terminalBody = document.querySelector(".terminal-body");
+  if (terminalBody) {
+    terminalBody.addEventListener("click", () => {
+      const selection = window.getSelection();
+      if (!selection || selection.toString().length === 0) {
+        terminalInput.focus();
+      }
+    });
+  }
 
   const contentCanvas = document.querySelector(".content-canvas");
 
