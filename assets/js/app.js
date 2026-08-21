@@ -449,7 +449,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Dynamically Adjust Reading Content Canvas Padding so text is never covered by Split Terminal
   function updateCanvasPadding() {
     if (!contentCanvas) return;
-    
+
+    const sidebarEl = document.getElementById("sidebar");
+    const sidebarW = (sidebarEl && !sidebarEl.classList.contains("collapsed"))
+      ? sidebarEl.offsetWidth
+      : 0;
+
+    // Reposition bottom dock terminal to respect sidebar width
+    if (terminalDrawer.classList.contains("mode-bottom") &&
+        !terminalDrawer.classList.contains("hidden") &&
+        !terminalDrawer.classList.contains("minimized")) {
+      terminalDrawer.style.setProperty("left", `${sidebarW}px`, "important");
+      terminalDrawer.style.setProperty("width", `calc(100vw - ${sidebarW}px)`, "important");
+    }
+
     if (terminalDrawer.classList.contains("hidden") || terminalDrawer.classList.contains("minimized")) {
       contentCanvas.style.paddingRight = "";
       contentCanvas.style.paddingBottom = "";
@@ -469,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
       contentCanvas.style.paddingBottom = "";
     }
   }
+
 
   // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
   function setTerminalMode(mode) {
@@ -729,7 +743,9 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebarToggleBtn.title = "Hide Sidebar";
     }
     localStorage.setItem("devops-sidebar-collapsed", collapsed ? "1" : "0");
-    setTimeout(updateCanvasPadding, 30);
+    // Fire immediately and again after the 280ms sidebar slide transition settles
+    updateCanvasPadding();
+    setTimeout(updateCanvasPadding, 300);
   }
 
   sidebarToggleBtn.addEventListener("click", () => {
