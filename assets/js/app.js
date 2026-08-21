@@ -459,8 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (terminalDrawer.classList.contains("mode-bottom") &&
         !terminalDrawer.classList.contains("hidden") &&
         !terminalDrawer.classList.contains("minimized")) {
-      terminalDrawer.style.setProperty("left", `${sidebarW}px`, "important");
-      terminalDrawer.style.setProperty("width", `calc(100vw - ${sidebarW}px)`, "important");
+      terminalDrawer.style.left = `${sidebarW}px`;
+      terminalDrawer.style.width = `calc(100vw - ${sidebarW}px)`;
     }
 
     if (terminalDrawer.classList.contains("hidden") || terminalDrawer.classList.contains("minimized")) {
@@ -486,6 +486,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
   function setTerminalMode(mode) {
+    // Pre-calculate sidebar offset so bottom dock never jumps
+    const sidebarEl = document.getElementById("sidebar");
+    const sidebarW = (sidebarEl && !sidebarEl.classList.contains("collapsed"))
+      ? sidebarEl.offsetWidth : 0;
+
     // Completely clear inline style properties to allow CSS layout modes to take effect
     terminalDrawer.style.removeProperty("left");
     terminalDrawer.style.removeProperty("top");
@@ -502,6 +507,9 @@ document.addEventListener('DOMContentLoaded', () => {
       terminalDrawer.classList.add("mode-split");
       document.getElementById("btn-mode-side").classList.add("active");
     } else if (mode === "bottom") {
+      // Pre-inject correct left/width BEFORE adding the class to prevent jump
+      terminalDrawer.style.left = `${sidebarW}px`;
+      terminalDrawer.style.width = `calc(100vw - ${sidebarW}px)`;
       terminalDrawer.classList.add("mode-bottom");
       document.getElementById("btn-mode-bottom").classList.add("active");
     } else {
