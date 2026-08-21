@@ -710,6 +710,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem("devops-handbook-theme") || "dark";
   applyTheme(savedTheme);
 
+  // ========================
+  // Sidebar Collapse Toggle
+  // ========================
+  const sidebar = document.getElementById("sidebar");
+  const sidebarToggleBtn = document.getElementById("btn-sidebar-toggle");
+
+  function applySidebarState(collapsed) {
+    if (collapsed) {
+      sidebar.classList.add("collapsed");
+      sidebarToggleBtn.textContent = "›";
+      sidebarToggleBtn.style.left = "0px";
+      sidebarToggleBtn.title = "Show Sidebar";
+    } else {
+      sidebar.classList.remove("collapsed");
+      sidebarToggleBtn.textContent = "‹";
+      sidebarToggleBtn.style.left = "";
+      sidebarToggleBtn.title = "Hide Sidebar";
+    }
+    localStorage.setItem("devops-sidebar-collapsed", collapsed ? "1" : "0");
+    setTimeout(updateCanvasPadding, 30);
+  }
+
+  sidebarToggleBtn.addEventListener("click", () => {
+    const isCollapsed = sidebar.classList.contains("collapsed");
+    applySidebarState(!isCollapsed);
+  });
+
+  // Restore sidebar state on page load
+  const savedSidebarState = localStorage.getItem("devops-sidebar-collapsed");
+  applySidebarState(savedSidebarState === "1");
+
   // Start Application with Dynamic Manifest
   loadManifestAndBuildNav();
 });

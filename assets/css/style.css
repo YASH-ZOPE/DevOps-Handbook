@@ -258,8 +258,55 @@ html, body {
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px 12px;
   flex-shrink: 0;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.28s ease;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  border-right-color: transparent;
+  overflow: hidden;
+}
+
+/* Sidebar Toggle Button — always visible floating on the left edge */
+.sidebar-toggle-btn {
+  position: fixed;
+  left: var(--sidebar-width);
+  top: calc(var(--header-height) + 50%);
+  transform: translate(-50%, -50%);
+  z-index: 90;
+  width: 22px;
+  height: 48px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.2s ease,
+              color 0.2s ease;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.25);
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--ubuntu-orange);
+  color: #fff;
+  border-color: var(--ubuntu-orange);
+}
+
+.sidebar.collapsed ~ .sidebar-toggle-btn,
+.sidebar-toggle-btn.sidebar-collapsed {
+  left: 0;
+  border-radius: 0 6px 6px 0;
 }
 
 /* Tier 1: Master Module Group */
