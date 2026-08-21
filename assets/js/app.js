@@ -435,14 +435,48 @@ document.addEventListener('DOMContentLoaded', () => {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  // Terminal Input Key Listener
+  // Linux Bash Command History Navigation State
+  let historyNavIndex = -1;
+  let historyDraftInput = "";
+
+  // Terminal Input Key Listener (Enter, ArrowUp, ArrowDown)
   terminalInput.addEventListener("keydown", (e) => {
+    const history = window.ubuntuTerminal ? window.ubuntuTerminal.history : [];
+
     if (e.key === "Enter") {
       const val = terminalInput.value;
       terminalInput.value = "";
+      historyNavIndex = -1;
+      historyDraftInput = "";
       if (val.trim()) {
         executeInTerminal(val);
       }
+    } else if (e.key === "ArrowUp") {
+      if (history.length === 0) return;
+      
+      e.preventDefault();
+      if (historyNavIndex === -1) {
+        historyDraftInput = terminalInput.value;
+        historyNavIndex = history.length - 1;
+      } else if (historyNavIndex > 0) {
+        historyNavIndex--;
+      }
+
+      terminalInput.value = history[historyNavIndex];
+      setTimeout(() => terminalInput.setSelectionRange(terminalInput.value.length, terminalInput.value.length), 0);
+    } else if (e.key === "ArrowDown") {
+      if (history.length === 0 || historyNavIndex === -1) return;
+      
+      e.preventDefault();
+      if (historyNavIndex < history.length - 1) {
+        historyNavIndex++;
+        terminalInput.value = history[historyNavIndex];
+      } else {
+        historyNavIndex = -1;
+        terminalInput.value = historyDraftInput;
+      }
+
+      setTimeout(() => terminalInput.setSelectionRange(terminalInput.value.length, terminalInput.value.length), 0);
     }
   });
 
