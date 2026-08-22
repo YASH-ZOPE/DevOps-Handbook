@@ -497,55 +497,39 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCanvasPadding() {
     if (!contentCanvas) return;
 
+    // Reset canvas padding first so state is clean
+    contentCanvas.style.paddingRight = "";
+    contentCanvas.style.paddingBottom = "";
+
+    if (terminalDrawer.classList.contains("hidden") || terminalDrawer.classList.contains("minimized")) {
+      return;
+    }
+
     const sidebarEl = document.getElementById("sidebar");
     const sidebarW = (sidebarEl && !sidebarEl.classList.contains("collapsed"))
       ? sidebarEl.offsetWidth
       : 0;
 
-    // Reposition bottom dock terminal to respect sidebar width
-    if (terminalDrawer.classList.contains("mode-bottom") &&
-        !terminalDrawer.classList.contains("hidden") &&
-        !terminalDrawer.classList.contains("minimized")) {
-      terminalDrawer.style.left = `${sidebarW}px`;
-      terminalDrawer.style.width = `calc(100vw - ${sidebarW}px)`;
-    }
-
-    if (terminalDrawer.classList.contains("hidden") || terminalDrawer.classList.contains("minimized")) {
-      contentCanvas.style.paddingRight = "";
-      contentCanvas.style.paddingBottom = "";
-      return;
-    }
-
     if (terminalDrawer.classList.contains("mode-split")) {
       const termWidth = terminalDrawer.offsetWidth;
       contentCanvas.style.paddingRight = `${termWidth + 24}px`;
-      contentCanvas.style.paddingBottom = "";
     } else if (terminalDrawer.classList.contains("mode-bottom")) {
+      terminalDrawer.style.left = `${sidebarW}px`;
+      terminalDrawer.style.width = `calc(100vw - ${sidebarW}px)`;
       const termHeight = terminalDrawer.offsetHeight;
       contentCanvas.style.paddingBottom = `${termHeight + 24}px`;
-      contentCanvas.style.paddingRight = "";
-    } else {
-      contentCanvas.style.paddingRight = "";
-      contentCanvas.style.paddingBottom = "";
     }
   }
 
 
   // Terminal Layout Mode Switcher (Side-by-side Split, Bottom Dock, Floating)
   function setTerminalMode(mode) {
-    // Pre-calculate sidebar offset so bottom dock never jumps
+    // Atomically wipe all inline styles left over from dragging or resizing
+    terminalDrawer.removeAttribute("style");
+
     const sidebarEl = document.getElementById("sidebar");
     const sidebarW = (sidebarEl && !sidebarEl.classList.contains("collapsed"))
       ? sidebarEl.offsetWidth : 0;
-
-    // Completely clear inline style properties to allow CSS layout modes to take effect
-    terminalDrawer.style.removeProperty("left");
-    terminalDrawer.style.removeProperty("top");
-    terminalDrawer.style.removeProperty("right");
-    terminalDrawer.style.removeProperty("bottom");
-    terminalDrawer.style.removeProperty("width");
-    terminalDrawer.style.removeProperty("height");
-    terminalDrawer.style.removeProperty("transition");
 
     terminalDrawer.classList.remove("hidden", "minimized", "mode-split", "mode-bottom", "mode-float");
     document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
@@ -554,7 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
       terminalDrawer.classList.add("mode-split");
       document.getElementById("btn-mode-side").classList.add("active");
     } else if (mode === "bottom") {
-      // Pre-inject correct left/width BEFORE adding the class to prevent jump
       terminalDrawer.style.left = `${sidebarW}px`;
       terminalDrawer.style.width = `calc(100vw - ${sidebarW}px)`;
       terminalDrawer.classList.add("mode-bottom");
@@ -564,7 +547,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById("btn-mode-float").classList.add("active");
     }
 
-    setTimeout(updateCanvasPadding, 30);
+    updateCanvasPadding();
+    setTimeout(updateCanvasPadding, 50);
   }
 
   // Draggable Floating Terminal Window Handler (Mouse + Touch Support)
