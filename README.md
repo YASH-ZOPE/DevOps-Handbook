@@ -28,8 +28,8 @@ Welcome to the DevOps Handbook!
 
 ---
 
-### Module 02: Git & GitHub Engineering (5+ YOE Scope)
-- 🐙 **[View Git & GitHub Master Roadmap](./02-Git-GitHub/git-and-github-roadmap.md)** (28 Production Topics & Workflows)
+### Module 02: Shell Scripting & Automation (5+ YOE Scope)
+- 🐚 **[View Shell Scripting Master Roadmap](./02-Shell-Scripting/shell-scripting-roadmap.md)** (Production Bash & Automation Workflows)
 
 ---
 

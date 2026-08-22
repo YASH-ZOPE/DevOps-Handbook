@@ -420,6 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const outputText = window.ubuntuTerminal.executeCommand(commandStr);
     
+    if (outputText.startsWith("__VIM__:")) {
+      const targetFile = outputText.replace("__VIM__:", "");
+      startVimSession(targetFile);
+      return;
+    }
+
     if (outputText === "__CLEAR__") {
       terminalOutput.innerHTML = "";
     } else {
@@ -429,6 +435,149 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update path prompt
     terminalPromptPath.innerText = window.ubuntuTerminal.currentPath;
     terminalOutput.scrollTop = terminalOutput.scrollHeight;
+  }
+
+  // ===================================
+  // Interactive Vim Editor Engine
+  // ===================================
+  let inVimMode = false;
+  let vimFilePath = "";
+  let vimLines = [];
+  let vimMode = "NORMAL"; // NORMAL, INSERT
+
+  function startVimSession(filePath) {
+    inVimMode = true;
+    vimFilePath = filePath;
+    vimMode = "NORMAL";
+    
+    const entry = window.ubuntuTerminal.fileSystem[filePath];
+    if (entry && entry.type === "file") {
+      vimLines = entry.content.split("\n");
+    } else {
+      vimLines = ["# New File created in Vim", "print('Hello from Vim editor!')", ""];
+      // Save new file to virtual FS
+      window.ubuntuTerminal.fileSystem[filePath] = {
+        type: "file",
+        mode: "-rw-r--r--",
+        owner: "ubuntu",
+        size: "40B",
+        content: vimLines.join("\n")
+      };
+      const parentPath = filePath.substring(0, filePath.lastIndexOf("/")) || "/";
+      if (window.ubuntuTerminal.fileSystem[parentPath]) {
+        const name = filePath.split("/").pop();
+        if (!window.ubuntuTerminal.fileSystem[parentPath].children.includes(name)) {
+          window.ubuntuTerminal.fileSystem[parentPath].children.push(name);
+        }
+      }
+    }
+
+    renderVimInterface();
+  }
+
+  function renderVimInterface(statusMsg = "") {
+    const fileName = vimFilePath.split("/").pop();
+    const lineCount = vimLines.length;
+    
+    let linesHtml = vimLines.map((line, idx) => {
+      return `<div><span style="color: #64748b; margin-right: 12px; user-select: none;">${idx + 1}</span><span class="vim-line-content">${escapeHtml(line)}</span></div>`;
+    }).join("");
+
+    for (let i = lineCount; i < 10; i++) {
+      linesHtml += `<div><span style="color: #3b82f6; margin-right: 12px; user-select: none;">~</span></div>`;
+    }
+
+    let statusText = statusMsg;
+    if (!statusText) {
+      if (vimMode === "NORMAL") {
+        statusText = `"${fileName}" ${lineCount}L [Press 'i' for INSERT, ':' for COMMAND (w/q/wq)]`;
+      } else {
+        statusText = `-- INSERT -- [Type edits. Press Esc for NORMAL mode]`;
+      }
+    }
+
+    terminalOutput.innerHTML = `
+      <div style="background: #1a0518; border: 1px solid #ff6b35; padding: 14px; border-radius: 8px; font-family: monospace;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: #ff6b35; font-weight: bold; margin-bottom: 10px;">
+          <span>VIM - Vi IMproved 8.2 (${fileName})</span>
+          <span style="font-size: 11px; background: rgba(255,107,53,0.2); padding: 2px 8px; border-radius: 4px;">Mode: ${vimMode}</span>
+        </div>
+        <div style="min-height: 220px; max-height: 340px; overflow-y: auto; background: #000000; padding: 12px; border-radius: 6px; color: #4af626; line-height: 1.6;">
+          ${linesHtml}
+        </div>
+        <div style="margin-top: 10px; font-weight: bold; font-size: 13px; color: ${vimMode === 'INSERT' ? '#34d399' : '#ff7d45'}; display: flex; justify-content: space-between;">
+          <span>${statusText}</span>
+          <div style="display: flex; gap: 6px;">
+            <button id="vim-btn-insert" style="background: #34d399; color: #000; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">[i] Insert</button>
+            <button id="vim-btn-save" style="background: #ff6b35; color: #fff; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">[:w] Save</button>
+            <button id="vim-btn-exit" style="background: #ef4444; color: #fff; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">[:q] Exit</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const inputRow = document.querySelector(".terminal-input-row");
+    if (inputRow) inputRow.style.display = "none";
+
+    // Bind Quick Action Buttons inside Vim
+    const btnInsert = document.getElementById("vim-btn-insert");
+    const btnSave = document.getElementById("vim-btn-save");
+    const btnExit = document.getElementById("vim-btn-exit");
+
+    if (btnInsert) {
+      btnInsert.addEventListener("click", () => {
+        vimMode = "INSERT";
+        renderVimInterface();
+        promptVimEdit();
+      });
+    }
+
+    if (btnSave) {
+      btnSave.addEventListener("click", () => {
+        saveVimFile();
+      });
+    }
+
+    if (btnExit) {
+      btnExit.addEventListener("click", () => {
+        exitVimSession();
+      });
+    }
+  }
+
+  function promptVimEdit() {
+    const newContent = prompt(`[VIM INSERT MODE] Edit file content for '${vimFilePath.split("/").pop()}':`, vimLines.join("\n"));
+    if (newContent !== null) {
+      vimLines = newContent.split("\n");
+      saveVimFile();
+      vimMode = "NORMAL";
+      renderVimInterface(`"${vimFilePath.split("/").pop()}" WRITTEN & SAVED`);
+    } else {
+      vimMode = "NORMAL";
+      renderVimInterface();
+    }
+  }
+
+  function saveVimFile() {
+    const contentStr = vimLines.join("\n");
+    window.ubuntuTerminal.fileSystem[vimFilePath] = {
+      type: "file",
+      mode: "-rw-r--r--",
+      owner: "ubuntu",
+      size: `${contentStr.length}B`,
+      content: contentStr
+    };
+    renderVimInterface(`[SAVED] "${vimFilePath.split("/").pop()}" ${vimLines.length}L, ${contentStr.length}B written`);
+  }
+
+  function exitVimSession() {
+    inVimMode = false;
+    const inputRow = document.querySelector(".terminal-input-row");
+    if (inputRow) inputRow.style.display = "flex";
+    terminalOutput.innerHTML += `<div class="terminal-line" style="color: #38bdf8; margin-top: 8px;">[VIM] Exited Vim editor. Returned to Ubuntu shell prompt.</div>`;
+    terminalInput.value = "";
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    setTimeout(() => terminalInput.focus(), 50);
   }
 
   function escapeHtml(str) {

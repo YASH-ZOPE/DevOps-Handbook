@@ -163,19 +163,44 @@ ubuntu:x:1000:1000:Ubuntu User:/home/ubuntu:/bin/bash
     this.history.push(rawCmd);
     this.historyIndex = this.history.length;
 
-    const parts = rawCmd.split(/\s+/);
+    let isSudo = false;
+    let parts = rawCmd.split(/\s+/);
+    if (parts[0].toLowerCase() === "sudo") {
+      isSudo = true;
+      parts = parts.slice(1);
+    }
+
+    if (parts.length === 0) {
+      return "usage: sudo command (e.g. sudo apt update, sudo systemctl restart nginx)";
+    }
+
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
+
+    // List of Privileged Linux Commands requiring sudo
+    const privilegedCommands = ["apt", "apt-get", "systemctl", "service", "useradd", "userdel", "usermod", "groupadd", "groupdel", "groupmod", "chown", "reboot", "shutdown"];
+
+    if (privilegedCommands.includes(cmd) && !isSudo) {
+      if (cmd === "apt" || cmd === "apt-get") {
+        return `E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)\nE: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you root?`;
+      }
+      if (cmd === "systemctl" || cmd === "service") {
+        return `Failed to connect to bus: Access denied (are you root? Try running with 'sudo').`;
+      }
+      return `bash: ${cmd}: Permission denied (are you root? Try running with 'sudo ${rawCmd}').`;
+    }
 
     switch (cmd) {
       case "pwd":
         return this.currentPath;
 
       case "whoami":
-        return "ubuntu";
+        return isSudo ? "root" : "ubuntu";
 
       case "id":
-        return "uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),27(sudo),999(docker)";
+        return isSudo
+          ? "uid=0(root) gid=0(root) groups=0(root)"
+          : "uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),27(sudo),999(docker)";
 
       case "uname":
         if (args.includes("-a")) {
@@ -188,6 +213,13 @@ ubuntu:x:1000:1000:Ubuntu User:/home/ubuntu:/bin/bash
 
       case "history":
         return this.history.map((c, i) => `  ${i + 1}  ${c}`).join("\n");
+
+      case "vim":
+      case "vi": {
+        const fileArg = args[0] || "untitled.txt";
+        const filePath = this.resolvePath(fileArg);
+        return `__VIM__:${filePath}`;
+      }
 
       case "cd": {
         const targetPath = this.resolvePath(args[0] || "/home/ubuntu");
@@ -380,6 +412,7 @@ ubuntu:x:1000:1000:Ubuntu User:/home/ubuntu:/bin/bash
       case "ps":
         return `  PID TTY          TIME CMD
  1042 pts/0    00:00:02 python3 app.py
+  402 pts/0    00:00:05 nginx
  1820 pts/0    00:00:00 bash
  2041 pts/0    00:00:00 ps`;
 
@@ -395,13 +428,185 @@ MiB Swap:   2048.0 total,   2048.0 free,      0.0 used
   402 root      20   0   14500   4100   3200 S   0.3   0.1   0:05.10 nginx
 `;
 
+      case "kill":
+      case "pkill": {
+        if (!args[0]) return `${cmd}: missing PID or process name`;
+        const target = args.find(a => !a.startsWith("-")) || args[0];
+        return `[SIGTERM] Sent termination signal to process ${target}.`;
+      }
+
+      case "free":
+        return `               total        used        free      shared  buff/cache   available
+Mem:           7.8Gi       2.1Gi       3.3Gi       120Mi       2.4Gi       5.4Gi
+Swap:          2.0Gi        0B         2.0Gi`;
+
+      case "df":
+        return `Filesystem     1K-blocks      Used Available Use% Mounted on
+/dev/sda1       51474024  19421008  29410188  40% /
+tmpfs             4070720      1240   4069480   1% /run
+/dev/sda2         204800     14200    190600   7% /boot/efi`;
+
+      case "du": {
+        const targetArg = args.find(a => !a.startsWith("-")) || ".";
+        const entry = this.fileSystem[this.resolvePath(targetArg)];
+        if (!entry) return `du: cannot access '${targetArg}': No such file or directory`;
+        return `4.0K\t${targetArg}`;
+      }
+
+      case "uptime":
+        return ` 01:15:22 up 2 days,  4:17,  1 user,  load average: 0.12, 0.09, 0.05`;
+
+      case "systemctl": {
+        if (!args[0]) return "systemctl: missing command (e.g. status, start, stop, restart)";
+        const subCmd = args[0];
+        const service = args[1] || "nginx";
+        if (subCmd === "status") {
+          return `● ${service}.service - High performance web server
+     Loaded: loaded (/lib/systemd/system/${service}.service; enabled; vendor preset: enabled)
+     Active: active (running) since Thu 2026-08-20 12:00:00 UTC; 2 days ago
+   Main PID: 402 (nginx)
+      Tasks: 2 (limit: 9482)
+     Memory: 14.2M
+        CPU: 5.10s`;
+        }
+        return `[OK] Executed 'systemctl ${subCmd} ${service}'.`;
+      }
+
+      case "curl": {
+        const url = args.find(a => !a.startsWith("-")) || "http://localhost:8080";
+        return `HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Sat, 22 Aug 2026 22:45:00 GMT
+
+{
+  "status": "UP",
+  "service": "DevOps Microservice",
+  "port": 8080,
+  "environment": "production"
+}`;
+      }
+
+      case "ping": {
+        const host = args.find(a => !a.startsWith("-")) || "google.com";
+        return `PING ${host} (142.250.190.46) 56(84) bytes of data.
+64 bytes from 142.250.190.46: icmp_seq=1 ttl=117 time=14.2 ms
+64 bytes from 142.250.190.46: icmp_seq=2 ttl=117 time=13.8 ms
+64 bytes from 142.250.190.46: icmp_seq=3 ttl=117 time=14.5 ms
+--- ${host} ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms`;
+      }
+
+      case "netstat":
+      case "ss":
+      case "lsof":
+        return `Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      1042/python3
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      402/nginx
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      890/sshd`;
+
+      case "ip":
+      case "ifconfig":
+        return `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0`;
+
+      case "find": {
+        const pattern = args.find(a => !a.startsWith("-") && a !== ".") || "";
+        const allPaths = Object.keys(this.fileSystem);
+        if (!pattern) return allPaths.join("\n");
+        return allPaths.filter(p => p.includes(pattern)).join("\n");
+      }
+
+      case "wc": {
+        if (!args[0]) return "wc: missing file operand";
+        const filePath = this.resolvePath(args[0]);
+        const entry = this.fileSystem[filePath];
+        if (!entry) return `wc: ${args[0]}: No such file or directory`;
+        const lines = entry.content.split("\n").length;
+        const words = entry.content.trim().split(/\s+/).length;
+        return `  ${lines}  ${words}  ${entry.size || '100B'} ${args[0]}`;
+      }
+
+      case "stat": {
+        if (!args[0]) return "stat: missing operand";
+        const filePath = this.resolvePath(args[0]);
+        const entry = this.fileSystem[filePath];
+        if (!entry) return `stat: cannot stat '${args[0]}': No such file or directory`;
+        return `  File: ${args[0]}
+  Size: ${entry.size || '4096B'}      Blocks: 8          IO Block: 4096   ${entry.type || 'file'}
+Device: 801h/2049d  Inode: 104258      Links: 1
+Access: (${entry.mode || '-rw-r--r--'})  Uid: (1000/ubuntu)   Gid: (1000/ubuntu)
+Access: 2026-08-22 01:00:00.000000000 +0000
+Modify: 2026-08-22 01:00:00.000000000 +0000`;
+      }
+
+      case "useradd": {
+        if (!args[0]) return "useradd: missing username argument";
+        const username = args.find(a => !a.startsWith("-")) || args[0];
+        return `[ROOT OK] Created new system user '${username}' (home: /home/${username}, uid: 1001).`;
+      }
+
+      case "userdel": {
+        if (!args[0]) return "userdel: missing username argument";
+        const username = args.find(a => !a.startsWith("-")) || args[0];
+        return `[ROOT OK] Removed user '${username}'.`;
+      }
+
+      case "usermod": {
+        if (!args[0]) return "usermod: missing argument";
+        return `[ROOT OK] Updated user attributes.`;
+      }
+
+      case "groupadd": {
+        if (!args[0]) return "groupadd: missing group name";
+        const groupname = args.find(a => !a.startsWith("-")) || args[0];
+        return `[ROOT OK] Created new group '${groupname}' (gid: 1001).`;
+      }
+
+      case "groupdel": {
+        if (!args[0]) return "groupdel: missing group name";
+        const groupname = args.find(a => !a.startsWith("-")) || args[0];
+        return `[ROOT OK] Removed group '${groupname}'.`;
+      }
+
+      case "chown": {
+        if (args.length < 2) return "Usage: chown [OWNER][:GROUP] [FILE]";
+        const owner = args[0];
+        const filePath = this.resolvePath(args[1]);
+        const entry = this.fileSystem[filePath];
+        if (!entry) return `chown: cannot access '${args[1]}': No such file or directory`;
+        entry.owner = owner;
+        return `[ROOT OK] Changed ownership of '${args[1]}' to '${owner}'.`;
+      }
+
+      case "apt":
+      case "apt-get": {
+        const sub = args[0] || "update";
+        if (sub === "update") {
+          return `Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:2 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [119 kB]
+Get:3 http://security.ubuntu.com/ubuntu jammy-security InRelease [110 kB]
+Reading package lists... Done
+Building dependency tree... Done
+All packages are up to date.`;
+        }
+        return `Reading package lists... Done
+Building dependency tree... Done
+0 upgraded, 1 newly installed, 0 to remove.`;
+      }
+
       case "help":
         return `📌 Ubuntu Terminal Simulator — Supported Linux Commands:
 
-  Navigation:      pwd, ls, cd, mkdir, touch, rm
-  File Inspection: cat, head, tail, grep, echo
-  Permissions:     chmod, whoami, id, uname
-  Process & System: ps, top, clear, history, help
+  Navigation:       pwd, ls, cd, mkdir, touch, rm, find
+  File Inspection:  cat, head, tail, grep, echo, wc, stat
+  Permissions:      chmod, whoami, id, uname
+  Networking:       curl, ping, netstat, ss, lsof, ip, ifconfig
+  System & Memory:  df, du, free, uptime, systemctl, ps, top, kill, apt
+  Terminal Utility: clear, history, help
 
 💡 Tip: Click "▶ Run in Terminal" on any command block in the handbook to execute it here automatically!`;
 
